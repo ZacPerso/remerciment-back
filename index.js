@@ -1,7 +1,6 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const app = express();
-const fs = require("fs");
 const path = require("path");
 
 const SECRET_KEY = "supersecretkey";
@@ -9,6 +8,7 @@ const VALID_CODE = "12345"; // Code à valider pour générer un token
 
 app.use(express.json());
 
+// Vérifier si le token JWT est valide (optionnel si tu veux protéger l'URL)
 const verifyToken = (req, res, next) => {
   const token = req.headers["authorization"]?.split(" ")[1];
 
@@ -24,13 +24,24 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// Route pour vérifier le code et générer un token
+// Route pour vérifier le code et renvoyer l'URL de la vidéo
 app.post("/api/verify", (req, res) => {
   const { code } = req.body;
 
+  // Vérification du code
   if (code === VALID_CODE) {
+    // Optionnellement, tu peux ici générer un token JWT
     const token = jwt.sign({ access: "granted" }, SECRET_KEY, { expiresIn: "1h" });
-    return res.json({ success: true, token });
+
+    // Envoie de l'URL de la vidéo (ici c'est un fichier local, mais tu peux le modifier pour pointer vers un serveur CDN)
+    const videoUrl = "http://localhost:3000/video"; // Remplace par ton URL vidéo
+
+    return res.json({
+      success: true,
+      message: "Code valide",
+      videoUrl: videoUrl,
+      token: token // Tu peux envoyer le token si tu veux sécuriser l'accès à la vidéo
+    });
   }
 
   return res.status(401).json({ success: false, message: "Code invalide" });
@@ -39,28 +50,7 @@ app.post("/api/verify", (req, res) => {
 // Route pour streamer la vidéo
 app.get("/video", verifyToken, (req, res) => {
   const videoPath = path.resolve(__dirname, "zac.mp4");
-  const stat = fs.statSync(videoPath);
-  const fileSize = stat.size;
-  const range = req.headers.range;
-
-  if (range) {
-    const parts = range.replace(/bytes=/, "").split("-");
-    const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-
-    res.status(206);
-    res.set("Content-Range", `bytes ${start}-${end}/${fileSize}`);
-    res.set("Accept-Ranges", "bytes");
-    res.set("Content-Length", end - start + 1);
-    res.set("Content-Type", "video/mp4");
-
-    const stream = fs.createReadStream(videoPath, { start, end });
-    stream.pipe(res);
-  } else {
-    res.set("Content-Length", fileSize);
-    res.set("Content-Type", "video/mp4");
-    fs.createReadStream(videoPath).pipe(res);
-  }
+  res.sendFile(videoPath);
 });
 
 // Serve static HTML page
