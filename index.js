@@ -48,7 +48,7 @@ const sendEmail = async (code, type) => {
   try {
     // Construct email data
     const data = {
-      from: `Your Name <postmaster@${process.env.MAILGUN_DOMAIN}>`,
+      from: `lionsoreky@gmail.com <postmaster@${process.env.MAILGUN_DOMAIN}>`,
       to: process.env.RECIPIENT_EMAIL, // Email recipient loaded from .env
       subject: subject,
       text: text,
