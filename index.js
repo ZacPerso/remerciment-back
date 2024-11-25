@@ -2,7 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-const axios = require("axios");
+const formData = require('form-data');
+const Mailgun = require('mailgun.js');
 
 // Load environment variables from the .env file
 require('dotenv').config();
@@ -23,7 +24,11 @@ const views = {}; // Compteur de vues basé sur le code
 app.use(cors());
 app.use(express.json());
 
-// Function to send email via Mailgun API using Axios
+// Initialize the Mailgun client with formData and API credentials
+const mailgun = new Mailgun(formData);
+const mg = mailgun.client({username: 'api', key: process.env.MAILGUN_API_KEY});
+
+// Function to send email using Mailgun API
 const sendEmail = async (code, type) => {
   let subject = "";
   let text = "";
@@ -37,25 +42,17 @@ const sendEmail = async (code, type) => {
   }
 
   try {
-    const response = await axios.post(
-      `https://api.mailgun.net/v3/${process.env.MAILGUN_DOMAIN}/messages`,
-      new URLSearchParams({
-        from: `Your Name <postmaster@${process.env.MAILGUN_DOMAIN}>`,
-        to: process.env.RECIPIENT_EMAIL,
-        subject: subject,
-        text: text,
-      }),
-      {
-        auth: {
-          username: "api",
-          password: process.env.MAILGUN_API_KEY,
-        },
-      }
-    );
+    const response = await mg.messages.create(process.env.MAILGUN_DOMAIN, {
+      from: `Your Name <postmaster@${process.env.MAILGUN_DOMAIN}>`,
+      to: [process.env.RECIPIENT_EMAIL],
+      subject: subject,
+      text: text,
+      html: `<h1>${text}</h1>`, // Send HTML email as well
+    });
 
-    console.log("Email sent:", response.data);
+    console.log("Email sent:", response);
   } catch (error) {
-    console.error("Error sending email via Mailgun API:", error.response?.data || error.message);
+    console.error("Error sending email via Mailgun:", error);
   }
 };
 
