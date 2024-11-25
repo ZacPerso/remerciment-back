@@ -4,6 +4,9 @@ const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
 
+// Load environment variables from the .env file
+require('dotenv').config();
+
 const app = express();
 
 const VALID_CODE = "143143"; // Code à valider pour générer un accès
@@ -15,13 +18,13 @@ const views = {}; // Compteur de vues basé sur le code
 app.use(cors());
 app.use(express.json());
 
-// Configurer Nodemailer
+// Configurer Nodemailer avec les variables d'environnement
 const transporter = nodemailer.createTransport({
   host: "smtp.mailgun.org",
   port: 587,
   auth: {
-    user: "postmaster@sandboxe03947f50fd140cf81ce9231ea792865.mailgun.org", // Replace with the username from Mailtrap
-    pass: "277e57e165647e18ff0474db686617e7-c02fd0ba-6831f844", // Replace with the password from Mailtrap
+    user: `postmaster@${process.env.MAILGUN_DOMAIN}`, // Use environment variable for domain
+    pass: process.env.MAILGUN_API_KEY, // Use environment variable for API key
   },
 });
 
@@ -39,8 +42,8 @@ const sendEmail = (code, type) => {
   }
 
   const mailOptions = {
-    from: "lionsoreky@gmail.com", // Sender email
-    to: "lionsoreky@gmail.com", // Recipient email
+    from: process.env.SENDER_EMAIL, // Sender email from environment variable
+    to: process.env.RECIPIENT_EMAIL, // Recipient email from environment variable
     subject: subject,
     text: text,
   };
