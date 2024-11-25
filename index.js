@@ -65,45 +65,40 @@ const sendEmail = async (code, type) => {
 };
 
 // Route: Verify code and return the video URL
-app.post("/api/verify", (req, res) => {
+app.post("/api/verify", async (req, res) => {
   const { code } = req.body;
 
-  // Check for admin code
   if (code === ADMIN_CODE) {
-    sendEmail(code, "admin"); // Send admin notification email
-
+    await sendEmail(code, "admin"); // Assurez-vous que l'email est bien envoyé avant de continuer
     return res.json({
       success: true,
       message: "Code admin valide",
-      videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi", // Video URL
+      videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi",
     });
   }
 
-  // Check for normal code
   if (code === VALID_CODE) {
     if (!views[code]) {
       views[code] = 0;
     }
 
     if (views[code] < MAX_VIEWS) {
-      views[code]++; // Increment the usage counter
-
-      sendEmail(code, "normal"); // Send normal usage notification email
-
+      views[code]++;
+      await sendEmail(code, "normal"); // Assurez-vous que l'email est bien envoyé avant de continuer
       return res.json({
         success: true,
         message: "Code valide",
-        videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi", // Video URL
+        videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi",
       });
     } else {
       return res.status(403).json({
         success: false,
-        message: "Nombre de vues atteint pour ce code", // Views limit reached
+        message: "Nombre de vues atteint pour ce code",
       });
     }
   }
 
-  return res.status(401).json({ success: false, message: "Code invalide" }); // Invalid code
+  return res.status(401).json({ success: false, message: "Code invalide" });
 });
 
 // Route: Stream the video
