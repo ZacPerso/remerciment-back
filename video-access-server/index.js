@@ -44,8 +44,8 @@ app.get("/api/video", (req, res) => {
     }
 });
 
+// Log a message when the app is loaded for Vercel
+console.log("Server has been successfully deployed on Vercel!");
+
 // Export for Vercel
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+module.exports = app;
