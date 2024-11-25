@@ -13,6 +13,21 @@ if (!process.env.MAILGUN_API_KEY || !process.env.MAILGUN_DOMAIN) {
   process.exit(1);
 }
 
+const net = require('net');
+
+const testSMTPConnection = () => {
+    const client = net.createConnection(587, 'smtp.mailgun.org', () => {
+        console.log('SMTP connection successful!');
+        client.end();
+    });
+
+    client.on('error', (err) => {
+        console.error('SMTP connection failed:', err.message);
+    });
+};
+
+testSMTPConnection();
+
 
 const app = express();
 
@@ -28,13 +43,14 @@ app.use(express.json());
 // Configurer Nodemailer avec les variables d'environnement
 const transporter = nodemailer.createTransport({
   host: "smtp.mailgun.org",
-  port: 587, // Use 465 if you want to enable secure connection
-  secure: false, // Set to true for port 465
+  port: 465, // For SSL
+  secure: true, // Use SSL directly
   auth: {
-    user: `postmaster@${process.env.MAILGUN_DOMAIN}`, // Environment variable for the domain
-    pass: process.env.MAILGUN_API_KEY, // Environment variable for the API key
+    user: `postmaster@${process.env.MAILGUN_DOMAIN}`,
+    pass: process.env.MAILGUN_API_KEY,
   },
 });
+
 
 // Fonction pour envoyer un email
 const sendEmail = (code, type) => {
