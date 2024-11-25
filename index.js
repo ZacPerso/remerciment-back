@@ -1,14 +1,18 @@
 const express = require("express");
+const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const app = express();
+const fs = require("fs");
 const path = require("path");
+
 
 const SECRET_KEY = "supersecretkey";
 const VALID_CODE = "12345"; // Code à valider pour générer un token
 
+app.use(cors());
+
 app.use(express.json());
 
-// Vérifier si le token JWT est valide (optionnel si tu veux protéger l'URL)
 const verifyToken = (req, res, next) => {
   const token = req.headers["authorization"]?.split(" ")[1];
 
@@ -16,7 +20,7 @@ const verifyToken = (req, res, next) => {
     return res.status(401).json({ message: "Token manquant" });
   }
 
-  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+  jwt.verify(token, SECRET_KEY, (err) => {
     if (err) {
       return res.status(403).json({ message: "Token invalide ou expiré" });
     }
