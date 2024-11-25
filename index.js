@@ -7,6 +7,13 @@ const path = require("path");
 // Load environment variables from the .env file
 require('dotenv').config();
 
+
+if (!process.env.MAILGUN_API_KEY || !process.env.MAILGUN_DOMAIN) {
+  console.error("Missing Mailgun environment variables. Check Vercel configuration.");
+  process.exit(1);
+}
+
+
 const app = express();
 
 const VALID_CODE = "143143"; // Code à valider pour générer un accès
@@ -21,10 +28,11 @@ app.use(express.json());
 // Configurer Nodemailer avec les variables d'environnement
 const transporter = nodemailer.createTransport({
   host: "smtp.mailgun.org",
-  port: 587,
+  port: 587, // Use 465 if you want to enable secure connection
+  secure: false, // Set to true for port 465
   auth: {
-    user: `postmaster@${process.env.MAILGUN_DOMAIN}`, // Use environment variable for domain
-    pass: process.env.MAILGUN_API_KEY, // Use environment variable for API key
+    user: `postmaster@${process.env.MAILGUN_DOMAIN}`, // Environment variable for the domain
+    pass: process.env.MAILGUN_API_KEY, // Environment variable for the API key
   },
 });
 
