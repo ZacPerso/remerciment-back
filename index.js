@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 
 const VALID_CODE = "12345"; // Code à valider pour générer un accès
-const ADMIN_CODE = "admin123"; // Code administrateur pour un nombre illimité de vues
+const ADMIN_CODE = "599246"; // Code administrateur pour un nombre illimité de vues
 
 const MAX_VIEWS = 2; // Nombre de vues autorisées pour un utilisateur normal
 const views = {}; // Compteur de vues basé sur le code
