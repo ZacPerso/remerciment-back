@@ -11,6 +11,12 @@ const SECRET_KEY = process.env.SECRET_KEY || "supersecret";
 // Simule un code valide pour accéder à la vidéo
 const VALID_CODE = process.env.VALID_CODE || "12345";
 
+
+app.get("/", (req, res) => {
+    res.send("Server is running!");
+  });
+  
+
 // Endpoint pour vérifier le code et retourner un JWT
 app.post("/api/verify", (req, res) => {
     const { code } = req.body;
