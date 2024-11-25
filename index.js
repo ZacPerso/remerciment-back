@@ -23,7 +23,7 @@ app.post("/api/verify", (req, res) => {
     return res.json({
       success: true,
       message: "Code admin valide",
-      videoUrl: "/video" // URL de la vidéo
+      videoUrl: "zac.mp4" // URL de la vidéo
     });
   }
 
@@ -39,7 +39,7 @@ app.post("/api/verify", (req, res) => {
       return res.json({
         success: true,
         message: "Code valide",
-        videoUrl: "/video" // URL de la vidéo
+        videoUrl: "zac.mp4" // URL de la vidéo
       });
     } else {
       // Si le nombre de vues a atteint la limite, refuser l'accès
