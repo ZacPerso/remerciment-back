@@ -5,17 +5,16 @@ require("dotenv").config();
 const app = express();
 app.use(express.json());
 
-// Secret utilisé pour signer les JWT
+// Secret and Code
 const SECRET_KEY = process.env.SECRET_KEY || "supersecret";
-
-// Simule un code valide pour accéder à la vidéo
 const VALID_CODE = process.env.VALID_CODE || "12345";
 
+// Root Route
 app.get("/", (req, res) => {
     res.send("Server is running!");
 });
 
-// Endpoint pour vérifier le code et retourner un JWT
+// Verify Code and Issue Token
 app.post("/api/verify", (req, res) => {
     const { code } = req.body;
 
@@ -27,7 +26,7 @@ app.post("/api/verify", (req, res) => {
     res.status(401).json({ success: false, message: "Invalid code" });
 });
 
-// Endpoint pour accéder à la vidéo si l'utilisateur a un JWT valide
+// Access Video with Token
 app.get("/api/video", (req, res) => {
     const authHeader = req.headers.authorization;
 
@@ -45,6 +44,5 @@ app.get("/api/video", (req, res) => {
     }
 });
 
-// Start the server locally
+// Export for Vercel
 module.exports = app;
-
