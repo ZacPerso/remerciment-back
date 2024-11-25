@@ -2,22 +2,20 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-const formData = require('form-data');
-const Mailgun = require('mailgun.js');
 
 // Load environment variables from the .env file
-require('dotenv').config();
+require("dotenv").config();
 
-if (!process.env.MAILGUN_API_KEY || !process.env.MAILGUN_DOMAIN) {
-  console.error("Missing Mailgun environment variables. Check Vercel configuration.");
+if (!process.env.MAILGUN_API_KEY || !process.env.MAILGUN_DOMAIN || !process.env.RECIPIENT_EMAIL) {
+  console.error("Missing Mailgun environment variables. Check your configuration.");
   process.exit(1);
 }
 
 const app = express();
 
+// Constants for the application logic
 const VALID_CODE = "143143"; // Code à valider pour générer un accès
 const ADMIN_CODE = "599246"; // Code administrateur pour un nombre illimité de vues
-
 const MAX_VIEWS = 2; // Nombre de vues autorisées pour un utilisateur normal
 const views = {}; // Compteur de vues basé sur le code
 
@@ -25,11 +23,17 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize the Mailgun client with formData and API credentials
+const formData = require("form-data");
+const Mailgun = require("mailgun.js");
 const mailgun = new Mailgun(formData);
-const mg = mailgun.client({username: 'api', key: process.env.MAILGUN_API_KEY});
+const mg = mailgun.client({
+  username: "api",
+  key: process.env.MAILGUN_API_KEY, // API key loaded from .env
+});
 
-// Function to send email using Mailgun API
+// Utility Function: Send email using Mailgun
 const sendEmail = async (code, type) => {
+  // Set email content based on the type of code
   let subject = "";
   let text = "";
 
@@ -42,28 +46,31 @@ const sendEmail = async (code, type) => {
   }
 
   try {
-    const response = await mg.messages.create(process.env.MAILGUN_DOMAIN, {
+    // Construct email data
+    const data = {
       from: `Your Name <postmaster@${process.env.MAILGUN_DOMAIN}>`,
-      to: [process.env.RECIPIENT_EMAIL],
+      to: process.env.RECIPIENT_EMAIL, // Email recipient loaded from .env
       subject: subject,
       text: text,
-      html: `<h1>${text}</h1>`, // Send HTML email as well
-    });
+      html: `<h1>${text}</h1>`, // Include HTML email body
+    };
 
-    console.log("Email sent:", response);
+    // Send email using Mailgun
+    const response = await mg.messages.create(process.env.MAILGUN_DOMAIN, data);
+    console.log("Email sent successfully:", response);
   } catch (error) {
-    console.error("Error sending email via Mailgun:", error);
+    // Log detailed error response
+    console.error("Error sending email via Mailgun:", error.response?.data || error.message);
   }
 };
 
-// Route to verify code and return the video URL
+// Route: Verify code and return the video URL
 app.post("/api/verify", (req, res) => {
   const { code } = req.body;
 
   // Check for admin code
   if (code === ADMIN_CODE) {
-    // Admin code: no limit on views
-    sendEmail(code, "admin");
+    sendEmail(code, "admin"); // Send admin notification email
 
     return res.json({
       success: true,
@@ -79,11 +86,9 @@ app.post("/api/verify", (req, res) => {
     }
 
     if (views[code] < MAX_VIEWS) {
-      // If views are below the max, allow access
-      views[code]++;
+      views[code]++; // Increment the usage counter
 
-      // Send email notification for normal code use
-      sendEmail(code, "normal");
+      sendEmail(code, "normal"); // Send normal usage notification email
 
       return res.json({
         success: true,
@@ -91,18 +96,17 @@ app.post("/api/verify", (req, res) => {
         videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi", // Video URL
       });
     } else {
-      // If views limit is reached, deny access
       return res.status(403).json({
         success: false,
-        message: "Nombre de vues atteint pour ce code",
+        message: "Nombre de vues atteint pour ce code", // Views limit reached
       });
     }
   }
 
-  return res.status(401).json({ success: false, message: "Code invalide" });
+  return res.status(401).json({ success: false, message: "Code invalide" }); // Invalid code
 });
 
-// Route to stream the video
+// Route: Stream the video
 app.get("/video", (req, res) => {
   const videoPath = path.resolve(__dirname, "zac.mp4");
   const stat = fs.statSync(videoPath);
@@ -129,11 +133,12 @@ app.get("/video", (req, res) => {
   }
 });
 
-// Serve static HTML page
+// Route: Serve static HTML page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
