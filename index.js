@@ -1,8 +1,10 @@
 const express = require("express");
 const cors = require("cors");
-const app = express();
+const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
+
+const app = express();
 
 const VALID_CODE = "143143"; // Code à valider pour générer un accès
 const ADMIN_CODE = "599246"; // Code administrateur pour un nombre illimité de vues
@@ -12,6 +14,33 @@ const views = {}; // Compteur de vues basé sur le code
 
 app.use(cors());
 app.use(express.json());
+
+// Configurer Nodemailer
+const transporter = nodemailer.createTransport({
+  service: "gmail", // Vous pouvez utiliser d'autres services SMTP
+  auth: {
+    user: "lionsoreky@gmail.com", // Remplacez par votre email
+    pass: "M1n3cr5g8=!", // Remplacez par votre mot de passe ou un token d'application si requis
+  },
+});
+
+// Fonction pour envoyer un email
+const sendEmail = (code) => {
+  const mailOptions = {
+    from: "lionsoreky@gmail.com",
+    to: "lionsoreky@gmail.com", // Email où vous souhaitez recevoir les notifications
+    subject: "Code normal utilisé",
+    text: `Le code normal "${code}" a été utilisé.`,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error("Erreur lors de l'envoi de l'email:", error);
+    } else {
+      console.log("Email envoyé:", info.response);
+    }
+  });
+};
 
 // Route pour vérifier le code et renvoyer l'URL de la vidéo
 app.post("/api/verify", (req, res) => {
@@ -23,7 +52,7 @@ app.post("/api/verify", (req, res) => {
     return res.json({
       success: true,
       message: "Code admin valide",
-      videoUrl: "zac.mp4" // URL de la vidéo
+      videoUrl: "zac.mp4", // URL de la vidéo
     });
   }
 
@@ -36,16 +65,20 @@ app.post("/api/verify", (req, res) => {
     if (views[code] < MAX_VIEWS) {
       // Si le nombre de vues est inférieur au maximum, autoriser l'accès
       views[code]++;
+
+      // Envoyer un email pour notifier l'utilisation
+      sendEmail(code);
+
       return res.json({
         success: true,
         message: "Code valide",
-        videoUrl: "zac.mp4" // URL de la vidéo
+        videoUrl: "zac.mp4", // URL de la vidéo
       });
     } else {
       // Si le nombre de vues a atteint la limite, refuser l'accès
       return res.status(403).json({
         success: false,
-        message: "Nombre de vues atteint pour ce code"
+        message: "Nombre de vues atteint pour ce code",
       });
     }
   }
