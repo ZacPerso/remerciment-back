@@ -1,33 +1,16 @@
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
+const axios = require("axios");
 
 // Load environment variables from the .env file
 require('dotenv').config();
-
 
 if (!process.env.MAILGUN_API_KEY || !process.env.MAILGUN_DOMAIN) {
   console.error("Missing Mailgun environment variables. Check Vercel configuration.");
   process.exit(1);
 }
-
-const net = require('net');
-
-const testSMTPConnection = () => {
-    const client = net.createConnection(587, 'smtp.mailgun.org', () => {
-        console.log('SMTP connection successful!');
-        client.end();
-    });
-
-    client.on('error', (err) => {
-        console.error('SMTP connection failed:', err.message);
-    });
-};
-
-testSMTPConnection();
-
 
 const app = express();
 
@@ -40,20 +23,8 @@ const views = {}; // Compteur de vues basé sur le code
 app.use(cors());
 app.use(express.json());
 
-// Configurer Nodemailer avec les variables d'environnement
-const transporter = nodemailer.createTransport({
-  host: "smtp.mailgun.org",
-  port: 465, // For SSL
-  secure: true, // Use SSL directly
-  auth: {
-    user: `postmaster@${process.env.MAILGUN_DOMAIN}`,
-    pass: process.env.MAILGUN_API_KEY,
-  },
-});
-
-
-// Fonction pour envoyer un email
-const sendEmail = (code, type) => {
+// Function to send email via Mailgun API using Axios
+const sendEmail = async (code, type) => {
   let subject = "";
   let text = "";
 
@@ -65,59 +36,65 @@ const sendEmail = (code, type) => {
     text = `Le code normal "${code}" a été utilisé.`;
   }
 
-  const mailOptions = {
-    from: process.env.SENDER_EMAIL, // Sender email from environment variable
-    to: process.env.RECIPIENT_EMAIL, // Recipient email from environment variable
-    subject: subject,
-    text: text,
-  };
+  try {
+    const response = await axios.post(
+      `https://api.mailgun.net/v3/${process.env.MAILGUN_DOMAIN}/messages`,
+      new URLSearchParams({
+        from: `Your Name <postmaster@${process.env.MAILGUN_DOMAIN}>`,
+        to: process.env.RECIPIENT_EMAIL,
+        subject: subject,
+        text: text,
+      }),
+      {
+        auth: {
+          username: "api",
+          password: process.env.MAILGUN_API_KEY,
+        },
+      }
+    );
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error("Erreur lors de l'envoi de l'email:", error);
-    } else {
-      console.log("Email envoyé:", info.response);
-    }
-  });
+    console.log("Email sent:", response.data);
+  } catch (error) {
+    console.error("Error sending email via Mailgun API:", error.response?.data || error.message);
+  }
 };
 
-// Route pour vérifier le code et renvoyer l'URL de la vidéo
+// Route to verify code and return the video URL
 app.post("/api/verify", (req, res) => {
   const { code } = req.body;
 
-  // Vérification du code
+  // Check for admin code
   if (code === ADMIN_CODE) {
-    // Code admin : aucune limite de vues
-
-    // Send email notification for admin code
+    // Admin code: no limit on views
     sendEmail(code, "admin");
 
     return res.json({
       success: true,
       message: "Code admin valide",
-      videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi", // URL de la vidéo
+      videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi", // Video URL
     });
   }
 
+  // Check for normal code
   if (code === VALID_CODE) {
     if (!views[code]) {
       views[code] = 0;
     }
 
     if (views[code] < MAX_VIEWS) {
-      // Si le nombre de vues est inférieur au maximum, autoriser l'accès
+      // If views are below the max, allow access
       views[code]++;
 
-      // Envoyer un email pour notifier l'utilisation
+      // Send email notification for normal code use
       sendEmail(code, "normal");
 
       return res.json({
         success: true,
         message: "Code valide",
-        videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi", // URL de la vidéo
+        videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi", // Video URL
       });
     } else {
-      // Si le nombre de vues a atteint la limite, refuser l'accès
+      // If views limit is reached, deny access
       return res.status(403).json({
         success: false,
         message: "Nombre de vues atteint pour ce code",
@@ -128,7 +105,7 @@ app.post("/api/verify", (req, res) => {
   return res.status(401).json({ success: false, message: "Code invalide" });
 });
 
-// Route pour streamer la vidéo
+// Route to stream the video
 app.get("/video", (req, res) => {
   const videoPath = path.resolve(__dirname, "zac.mp4");
   const stat = fs.statSync(videoPath);
