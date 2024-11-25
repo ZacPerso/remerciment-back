@@ -17,20 +17,32 @@ app.use(express.json());
 
 // Configurer Nodemailer
 const transporter = nodemailer.createTransport({
-  service: "gmail", // Vous pouvez utiliser d'autres services SMTP
+  host: "smtp.mailgun.org",
+  port: 587,
   auth: {
-    user: "lionsoreky@gmail.com", // Remplacez par votre email
-    pass: "M1n3cr5g8=!", // Remplacez par votre mot de passe ou un token d'application si requis
+    user: "postmaster@sandboxe03947f50fd140cf81ce9231ea792865.mailgun.org", // Replace with the username from Mailtrap
+    pass: "277e57e165647e18ff0474db686617e7-c02fd0ba-6831f844", // Replace with the password from Mailtrap
   },
 });
 
 // Fonction pour envoyer un email
-const sendEmail = (code) => {
+const sendEmail = (code, type) => {
+  let subject = "";
+  let text = "";
+
+  if (type === "admin") {
+    subject = "Code administrateur utilisé";
+    text = `Le code administrateur "${code}" a été utilisé. Il n'y a pas de limite de vues.`;
+  } else {
+    subject = "Code normal utilisé";
+    text = `Le code normal "${code}" a été utilisé.`;
+  }
+
   const mailOptions = {
-    from: "lionsoreky@gmail.com",
-    to: "lionsoreky@gmail.com", // Email où vous souhaitez recevoir les notifications
-    subject: "Code normal utilisé",
-    text: `Le code normal "${code}" a été utilisé.`,
+    from: "lionsoreky@gmail.com", // Sender email
+    to: "lionsoreky@gmail.com", // Recipient email
+    subject: subject,
+    text: text,
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
@@ -49,6 +61,10 @@ app.post("/api/verify", (req, res) => {
   // Vérification du code
   if (code === ADMIN_CODE) {
     // Code admin : aucune limite de vues
+
+    // Send email notification for admin code
+    sendEmail(code, "admin");
+
     return res.json({
       success: true,
       message: "Code admin valide",
@@ -67,7 +83,7 @@ app.post("/api/verify", (req, res) => {
       views[code]++;
 
       // Envoyer un email pour notifier l'utilisation
-      sendEmail(code);
+      sendEmail(code, "normal");
 
       return res.json({
         success: true,
