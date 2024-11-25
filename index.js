@@ -34,7 +34,7 @@ app.post("/api/verify", (req, res) => {
     const token = jwt.sign({ access: "granted" }, SECRET_KEY, { expiresIn: "1h" });
 
     // Envoie de l'URL de la vidéo (ici c'est un fichier local, mais tu peux le modifier pour pointer vers un serveur CDN)
-    const videoUrl = "http://localhost:3000/video"; // Remplace par ton URL vidéo
+    const videoUrl = "https://github.com/ZacPerso/remerciment/blob/main/zac.mp4"; // Remplace par ton URL vidéo
 
     return res.json({
       success: true,
