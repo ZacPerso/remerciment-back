@@ -11,11 +11,18 @@ const SECRET_KEY = process.env.SECRET_KEY || "supersecret";
 // Simule un code valide pour accéder à la vidéo
 const VALID_CODE = process.env.VALID_CODE || "12345";
 
-
+// Route principale pour vérifier si le serveur fonctionne
 app.get("/", (req, res) => {
-    res.send("Server is running!");
-  });
-  
+    res.send(`
+        <html>
+        <head><title>Server Test Page</title></head>
+        <body>
+            <h1>Server is running!</h1>
+            <p>Test the <a href="/api/test">/api/test</a> endpoint.</p>
+        </body>
+        </html>
+    `);
+});
 
 // Endpoint pour vérifier le code et retourner un JWT
 app.post("/api/verify", (req, res) => {
@@ -49,6 +56,19 @@ app.get("/api/video", (req, res) => {
     } catch (err) {
         res.status(403).json({ success: false, message: "Invalid or expired token" });
     }
+});
+
+// Ajoute une page de test
+app.get("/api/test", (req, res) => {
+    res.send(`
+        <html>
+        <head><title>Test Page</title></head>
+        <body>
+            <h1>Test Endpoint</h1>
+            <p>This is a test page to verify the server setup.</p>
+        </body>
+        </html>
+    `);
 });
 
 // Configuration pour Vercel : exportation de l'application
