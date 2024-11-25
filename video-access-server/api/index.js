@@ -14,6 +14,24 @@ app.get("/", (req, res) => {
     res.send("Server is running!");
 });
 
+// Test Route returning HTML
+app.get("/api/test", (req, res) => {
+    res.status(200).send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Test Page</title>
+        </head>
+        <body>
+            <h1>Test Page</h1>
+            <p>This is a simple test page to verify the server is working!</p>
+        </body>
+        </html>
+    `);
+});
+
 // Verify Code and Issue Token
 app.post("/api/verify", (req, res) => {
     const { code } = req.body;
@@ -43,9 +61,6 @@ app.get("/api/video", (req, res) => {
         res.status(403).json({ success: false, message: "Invalid or expired token" });
     }
 });
-
-// Log a message when the app is loaded for Vercel
-console.log("Server has been successfully deployed on Vercel!");
 
 // Export for Vercel
 module.exports = app;
