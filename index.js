@@ -71,12 +71,11 @@ app.post("/api/verify", (req, res) => {
     return res.json({
       success: true,
       message: "Code admin valide",
-      videoUrl: "https://youtu.be/7B-0ZPrkym4", // URL de la vidéo
+      videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi", // URL de la vidéo
     });
   }
 
   if (code === VALID_CODE) {
-    // Code normal : vérifier le nombre de vues
     if (!views[code]) {
       views[code] = 0;
     }
@@ -91,7 +90,7 @@ app.post("/api/verify", (req, res) => {
       return res.json({
         success: true,
         message: "Code valide",
-        videoUrl: "https://youtu.be/7B-0ZPrkym4", // URL de la vidéo
+        videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi", // URL de la vidéo
       });
     } else {
       // Si le nombre de vues a atteint la limite, refuser l'accès
