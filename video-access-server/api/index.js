@@ -62,5 +62,5 @@ app.get("/api/video", (req, res) => {
     }
 });
 
-// Export for Vercel
+// Export for Vercel - Wrapping Express for Serverless Function
 module.exports = app;
