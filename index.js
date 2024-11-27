@@ -73,7 +73,7 @@ app.post("/api/verify", async (req, res) => {
     return res.json({
       success: true,
       message: "Code admin valide",
-      videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi",
+      videoUrl: "https://www.youtube.com/embed/SkO1Ul3RbAc?si=HNwOABP25M6jKc-A",
     });
   }
 
@@ -88,7 +88,7 @@ app.post("/api/verify", async (req, res) => {
       return res.json({
         success: true,
         message: "Code valide",
-        videoUrl: "https://www.youtube.com/embed/7B-0ZPrkym4?si=su9hVjuDaK0p84bi",
+        videoUrl: "https://www.youtube.com/embed/SkO1Ul3RbAc?si=HNwOABP25M6jKc-A",
       });
     } else {
       return res.status(403).json({
