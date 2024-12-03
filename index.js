@@ -64,6 +64,42 @@ const sendEmail = async (code, type) => {
   }
 };
 
+// Route to handle form submission and send an email with the user's email and timestamp
+app.post("/api/notify", async (req, res) => {
+  const { email } = req.body;
+
+  // Ensure email is provided
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email is required." });
+  }
+
+  const timestamp = new Date().toLocaleString(); // Get the current timestamp
+  
+  try {
+    // Send an email using Mailgun with the user's email and timestamp
+    const data = {
+      from: `lionsoreky@gmail.com <postmaster@${process.env.MAILGUN_DOMAIN}>`,
+      to: process.env.RECIPIENT_EMAIL, // Recipient email from the .env file
+      subject: "Nouvelle inscription pour préavis",
+      text: `Un utilisateur a soumis un email à ${email} à ${timestamp}.`,
+      html: `<h1>Nouvelle inscription</h1><p>Un utilisateur a soumis un email à <strong>${email}</strong> à ${timestamp}.</p>`, // HTML content for the email
+    };
+
+    // Send the email using Mailgun
+    const response = await mg.messages.create(process.env.MAILGUN_DOMAIN, data);
+    console.log("Email sent successfully:", response);
+
+    // Send back a success response to the client
+    return res.json({
+      success: true,
+      message: "Email envoyé avec succès. Vous serez averti.",
+    });
+  } catch (error) {
+    console.error("Error sending email via Mailgun:", error.response?.data || error.message);
+    return res.status(500).json({ success: false, message: "Erreur lors de l'envoi de l'email." });
+  }
+});
+
 // Route: Verify code and return the video URL
 app.post("/api/verify", async (req, res) => {
   const { code } = req.body;
